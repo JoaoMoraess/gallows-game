@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
@@ -10,21 +11,25 @@ import { Condemned } from '../components/condemned';
 import { Gallows } from '../components/gallows';
 
 const Index = () => {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputLetterRef = useRef<HTMLInputElement>(null);
   const [wordState, setWordState] = useState<string[]>([]);
   const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([]);
   const [wrongLetters, setWrongLetters] = useState<string[]>([]);
 
-  function resetGame() {
+  const removeSpaces = (values: string[]) => {
+    return values.filter((item) => item !== ' ');
+  };
+
+  const resetGame = () => {
     setWrongLetters([]);
     setWordState([]);
     setDiscoveredLetters([]);
-  }
+  };
 
-  function gameOver(win: boolean) {
+  const gameOver = (win: boolean) => {
     win ? alert('Congratulation, you win!') : alert('You died!');
     resetGame();
-  }
+  };
 
   useEffect(() => {
     if (wrongLetters.length >= 6) {
@@ -33,10 +38,9 @@ const Index = () => {
   }, [wrongLetters]);
 
   useEffect(() => {
-    const discoveredLettersCount = wordState.map((letter) =>
-      discoveredLetters.includes(letter)
+    const discoveredLettersCount = removeSpaces(wordState).map((letter) =>
+      removeSpaces(discoveredLetters).includes(letter)
     );
-
     const missingLetter = discoveredLettersCount.includes(false);
 
     if (missingLetter === false && discoveredLetters.length > 0) {
@@ -44,18 +48,24 @@ const Index = () => {
     }
   }, [discoveredLetters]);
 
-  const checkAlreadyTyped = (value: string) => {
-    return wrongLetters.includes(value)
-      ? true
-      : !!discoveredLetters.includes(value);
+  const checkAlreadyTyped = (value: string): boolean | undefined => {
+    if (value !== ' ') {
+      return wrongLetters.includes(value)
+        ? true
+        : !!discoveredLetters.includes(value);
+    }
   };
 
   const error = (value: string) => {
-    setWrongLetters((old) => [...old, value]);
+    if (value !== ' ') {
+      setWrongLetters((old) => [...old, value]);
+    }
   };
 
   const success = (value: string) => {
-    setDiscoveredLetters((old) => [...old, value]);
+    if (value !== ' ') {
+      setDiscoveredLetters((old) => [...old, value]);
+    }
   };
 
   const initGame = () => {
@@ -67,19 +77,35 @@ const Index = () => {
   const compareString = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const inputLetter = inputRef.current!.value;
+    const inputLetter = inputLetterRef.current!.value;
+
+    if (
+      inputLetter === undefined ||
+      inputLetter === null ||
+      inputLetter === ''
+    ) {
+      inputLetterRef.current!.value = '';
+      return;
+    }
 
     const alreadyTyped = checkAlreadyTyped(inputLetter);
 
     if (alreadyTyped) {
       alert('already typed letter');
     } else {
-      wordState.includes(inputLetter)
+      removeSpaces(wordState).includes(inputLetter)
         ? success(inputLetter)
         : error(inputLetter);
     }
 
-    inputRef.current!.value = '';
+    inputLetterRef.current!.value = '';
+  };
+
+  const tryWord = () => {
+    const word = prompt('what is the word?');
+    if (word === wordState.join('')) {
+      gameOver(true);
+    }
   };
 
   return (
@@ -102,13 +128,15 @@ const Index = () => {
           </Gallows>
           <div className="w-full flex justify-around items-center h-24">
             {wordState.map((letter: string, index: number) => {
-              return (
+              return letter !== ' ' ? (
                 <h3
                   key={`${letter}-${index}`}
                   className="border-b-2 border-gray-700 p-1"
                 >
                   {discoveredLetters.includes(letter) && letter}
                 </h3>
+              ) : (
+                <div className="w-3"> </div>
               );
             })}
           </div>
@@ -121,12 +149,18 @@ const Index = () => {
         >
           {wordState.length ? 'restart' : 'start'}
         </button>
+        <button
+          className="p-2 bg-blue-400 rounded-xl flex items-center"
+          onClick={wordState.length ? () => tryWord() : () => null}
+        >
+          try
+        </button>
         <form className="flex w-28" onSubmit={(e) => compareString(e)}>
           {wordState.length > 0 && (
             <>
               <input
                 autoFocus
-                ref={inputRef}
+                ref={inputLetterRef}
                 maxLength={1}
                 type="text"
                 className="text-center text-2xl p-4 w-16 h-14 border-2 border-blue-600 rounded-l-lg"

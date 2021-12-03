@@ -12,12 +12,15 @@ import { Gallows } from '../components/gallows';
 
 const Index = () => {
   const inputLetterRef = useRef<HTMLInputElement>(null);
+  const [players, setPlayers] = useState<{ [player: string]: number }>({});
   const [wordState, setWordState] = useState<string[]>([]);
   const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([]);
   const [wrongLetters, setWrongLetters] = useState<string[]>([]);
 
-  const removeSpaces = (values: string[]) => {
-    return values.filter((item) => item !== ' ');
+  const sanitizeWorld = (values: string[]) => {
+    return values
+      .filter((item) => item !== ' ')
+      .map((word) => word.toUpperCase());
   };
 
   const resetGame = () => {
@@ -26,34 +29,37 @@ const Index = () => {
     setDiscoveredLetters([]);
   };
 
-  const gameOver = (win: boolean) => {
+  const gameOver = (win: boolean, resetFunction: () => void) => {
     win ? alert('Congratulation, you win!') : alert('You died!');
-    resetGame();
+    resetFunction();
   };
 
   useEffect(() => {
     if (wrongLetters.length >= 6) {
-      gameOver(false);
+      gameOver(false, resetGame);
     }
   }, [wrongLetters]);
 
   useEffect(() => {
-    const discoveredLettersCount = removeSpaces(wordState).map((letter) =>
-      removeSpaces(discoveredLetters).includes(letter)
+    const discoveredLettersCount = sanitizeWorld(wordState).map((letter) =>
+      sanitizeWorld(discoveredLetters).includes(letter)
     );
     const missingLetter = discoveredLettersCount.includes(false);
 
     if (missingLetter === false && discoveredLetters.length > 0) {
-      gameOver(true);
+      gameOver(true, resetGame);
     }
   }, [discoveredLetters]);
 
-  const checkAlreadyTyped = (value: string): boolean | undefined => {
+  const checkAlreadyTyped = (
+    value: string,
+    wrongs: string[],
+    discovered: string[]
+  ): boolean => {
     if (value !== ' ') {
-      return wrongLetters.includes(value)
-        ? true
-        : !!discoveredLetters.includes(value);
+      return wrongs.includes(value) ? true : !!discovered.includes(value);
     }
+    return false;
   };
 
   const error = (value: string) => {
@@ -68,16 +74,34 @@ const Index = () => {
     }
   };
 
+  const savePlayers = (playerNames: string[]): void => {
+    playerNames.map((player) => setPlayers((old) => ({ ...old, [player]: 0 })));
+  };
+
   const initGame = () => {
-    const word = prompt('What is your word?');
+    if (
+      Object.keys(players).length === 0 ||
+      Object.keys(players).length === 1
+    ) {
+      const player1 = prompt('Player 1 name:');
+      const player2 = prompt('Player 2 name:');
+
+      if (!!player1 && !!player2) savePlayers([player1, player2]);
+    }
+
+    const word = prompt('What is your word?')?.toUpperCase();
+
     const formatedWord = word?.split('');
-    word ? setWordState(formatedWord!) : alert('you need to choose a word');
+    !word || word === ' '
+      ? alert('you need to choose a word')
+      : setWordState(formatedWord!);
+    console.log(formatedWord);
   };
 
   const compareString = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const inputLetter = inputLetterRef.current!.value;
+    const inputLetter = inputLetterRef.current!.value.toUpperCase();
 
     if (
       inputLetter === undefined ||
@@ -88,12 +112,16 @@ const Index = () => {
       return;
     }
 
-    const alreadyTyped = checkAlreadyTyped(inputLetter);
+    const alreadyTyped = checkAlreadyTyped(
+      inputLetter,
+      wrongLetters,
+      discoveredLetters
+    );
 
     if (alreadyTyped) {
       alert('already typed letter');
     } else {
-      removeSpaces(wordState).includes(inputLetter)
+      sanitizeWorld(wordState).includes(inputLetter)
         ? success(inputLetter)
         : error(inputLetter);
     }
@@ -104,7 +132,7 @@ const Index = () => {
   const tryWord = () => {
     const word = prompt('what is the word?');
     if (word === wordState.join('')) {
-      gameOver(true);
+      gameOver(true, resetGame);
     }
   };
 
@@ -122,11 +150,11 @@ const Index = () => {
             ))}
           </div>
         </div>
-        <div className="w-96 h-96 p-9 border-2 border-blue-700 flex items-center justify-center flex-col">
+        <div className="min-w-96 h-96 p-11 border-2 border-blue-700 flex items-center justify-center flex-col">
           <Gallows>
             <Condemned errorsCount={wrongLetters.length} />
           </Gallows>
-          <div className="w-full flex justify-around items-center h-24">
+          <div className="w-full flex justify-center gap-5 items-center h-24">
             {wordState.map((letter: string, index: number) => {
               return letter !== ' ' ? (
                 <h3
@@ -140,6 +168,13 @@ const Index = () => {
               );
             })}
           </div>
+        </div>
+        <div className="flex flex-col gap-5">
+          {Object.keys(players)?.map((player, index) => (
+            <h1 className="text-lg text-gray-800" key={`${player}-${index}`}>
+              {player}: {players[player]}
+            </h1>
+          ))}
         </div>
       </div>
       <div className="gap-4 pt-6 flex justify-between items-center w-60">
@@ -160,6 +195,7 @@ const Index = () => {
             <>
               <input
                 autoFocus
+                placeholder="-"
                 ref={inputLetterRef}
                 maxLength={1}
                 type="text"

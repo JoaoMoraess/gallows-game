@@ -12,10 +12,11 @@ import { Gallows } from '../components/gallows';
 
 const Index = () => {
   const inputLetterRef = useRef<HTMLInputElement>(null);
-  const [players, setPlayers] = useState<{ [player: string]: number }>({});
+
   const [wordState, setWordState] = useState<string[]>([]);
   const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([]);
   const [wrongLetters, setWrongLetters] = useState<string[]>([]);
+  const [isEnd, setIsEnd] = useState(false);
 
   const sanitizeWorld = (values: string[]) => {
     return values
@@ -27,11 +28,13 @@ const Index = () => {
     setWrongLetters([]);
     setWordState([]);
     setDiscoveredLetters([]);
+    setIsEnd(false);
   };
 
   const gameOver = (win: boolean, resetFunction: () => void) => {
+    setIsEnd(true);
     win ? alert('Congratulation, you win!') : alert('You died!');
-    resetFunction();
+    setTimeout(() => resetFunction(), 1000);
   };
 
   useEffect(() => {
@@ -40,15 +43,17 @@ const Index = () => {
     }
   }, [wrongLetters]);
 
-  useEffect(() => {
+  const checkWin = (): boolean => {
     const discoveredLettersCount = sanitizeWorld(wordState).map((letter) =>
       sanitizeWorld(discoveredLetters).includes(letter)
     );
     const missingLetter = discoveredLettersCount.includes(false);
+    return !!(missingLetter === false && discoveredLetters.length > 0);
+  };
 
-    if (missingLetter === false && discoveredLetters.length > 0) {
-      gameOver(true, resetGame);
-    }
+  useEffect(() => {
+    const isWin = checkWin();
+    !!isWin && gameOver(true, resetGame);
   }, [discoveredLetters]);
 
   const checkAlreadyTyped = (
@@ -74,21 +79,7 @@ const Index = () => {
     }
   };
 
-  const savePlayers = (playerNames: string[]): void => {
-    playerNames.map((player) => setPlayers((old) => ({ ...old, [player]: 0 })));
-  };
-
-  const initGame = () => {
-    if (
-      Object.keys(players).length === 0 ||
-      Object.keys(players).length === 1
-    ) {
-      const player1 = prompt('Player 1 name:');
-      const player2 = prompt('Player 2 name:');
-
-      if (!!player1 && !!player2) savePlayers([player1, player2]);
-    }
-
+  const initRound = () => {
     const word = prompt('What is your word?')?.toUpperCase();
 
     const formatedWord = word?.split('');
@@ -152,7 +143,11 @@ const Index = () => {
         </div>
         <div className="min-w-96 h-96 p-11 border-2 border-blue-700 flex items-center justify-center flex-col">
           <Gallows>
-            <Condemned errorsCount={wrongLetters.length} />
+            <Condemned
+              endGame={isEnd}
+              win={checkWin()}
+              errorsCount={wrongLetters.length}
+            />
           </Gallows>
           <div className="w-full flex justify-center gap-5 items-center h-24">
             {wordState.map((letter: string, index: number) => {
@@ -169,18 +164,11 @@ const Index = () => {
             })}
           </div>
         </div>
-        <div className="flex flex-col gap-5">
-          {Object.keys(players)?.map((player, index) => (
-            <h1 className="text-lg text-gray-800" key={`${player}-${index}`}>
-              {player}: {players[player]}
-            </h1>
-          ))}
-        </div>
       </div>
       <div className="gap-4 pt-6 flex justify-between items-center w-60">
         <button
           className="p-2 bg-blue-400 rounded-xl flex items-center"
-          onClick={wordState.length ? () => resetGame() : () => initGame()}
+          onClick={wordState.length ? () => resetGame() : () => initRound()}
         >
           {wordState.length ? 'restart' : 'start'}
         </button>

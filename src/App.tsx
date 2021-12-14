@@ -1,60 +1,55 @@
-/* eslint-disable consistent-return */
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-restricted-globals */
-/* eslint-disable no-alert */
+import React, { useEffect, useRef, useState } from 'react'
+import './css/tailwind.css'
 
-import React, { useEffect, useRef, useState } from 'react';
+import { Condemned } from './components/condemned'
+import { Gallows } from './components/gallows'
 
-import { Condemned } from '../components/condemned';
-import { Gallows } from '../components/gallows';
+const App: React.FC = () => {
+  const inputLetterRef = useRef<HTMLInputElement>(null)
 
-const Index = () => {
-  const inputLetterRef = useRef<HTMLInputElement>(null);
+  const [wordState, setWordState] = useState<string[]>([])
+  const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([])
+  const [wrongLetters, setWrongLetters] = useState<string[]>([])
+  const [isEnd, setIsEnd] = useState(false)
 
-  const [wordState, setWordState] = useState<string[]>([]);
-  const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([]);
-  const [wrongLetters, setWrongLetters] = useState<string[]>([]);
-  const [isEnd, setIsEnd] = useState(false);
-
-  const sanitizeWorld = (values: string[]) => {
+  const sanitizeWorld = (values: string[]): string[] => {
     return values
       .filter((item) => item !== ' ')
-      .map((word) => word.toUpperCase());
-  };
+      .map((word) => word.toUpperCase())
+  }
 
-  const resetGame = () => {
-    setWrongLetters([]);
-    setWordState([]);
-    setDiscoveredLetters([]);
-    setIsEnd(false);
-  };
+  const resetGame = (): void => {
+    setWrongLetters([])
+    setWordState([])
+    setDiscoveredLetters([])
+    setIsEnd(false)
+  }
 
-  const gameOver = (win: boolean, resetFunction: () => void) => {
-    setIsEnd(true);
-    win ? alert('Congratulation, you win!') : alert('You died!');
-    setTimeout(() => resetFunction(), 1000);
-  };
+  const gameOver = (win: boolean, resetFunction: () => void): void => {
+    setIsEnd(true)
+    win ? alert('Congratulation, you win!') : alert('You died!')
+    setTimeout(() => resetFunction(), 1000)
+  }
 
   useEffect(() => {
     if (wrongLetters.length >= 6) {
-      gameOver(false, resetGame);
+      gameOver(false, resetGame)
     }
-  }, [wrongLetters]);
+  }, [wrongLetters])
 
   const checkWin = (): boolean => {
     const discoveredLettersCount = sanitizeWorld(wordState).map((letter) =>
       sanitizeWorld(discoveredLetters).includes(letter)
-    );
-    const missingLetter = discoveredLettersCount.includes(false);
-    return !!(missingLetter === false && discoveredLetters.length > 0);
-  };
+    )
+    const missingLetter = discoveredLettersCount.includes(false)
+    return !!(!missingLetter && discoveredLetters.length > 0)
+  }
 
   useEffect(() => {
-    const isWin = checkWin();
-    !!isWin && gameOver(true, resetGame);
-  }, [discoveredLetters]);
+    const isWin = checkWin()
+    !!isWin && gameOver(true, resetGame)
+  }, [checkWin, discoveredLetters])
 
   const checkAlreadyTyped = (
     value: string,
@@ -62,70 +57,70 @@ const Index = () => {
     discovered: string[]
   ): boolean => {
     if (value !== ' ') {
-      return wrongs.includes(value) ? true : !!discovered.includes(value);
+      return wrongs.includes(value) ? true : !!discovered.includes(value)
     }
-    return false;
-  };
+    return false
+  }
 
-  const error = (value: string) => {
+  const error = (value: string): void => {
     if (value !== ' ') {
-      setWrongLetters((old) => [...old, value]);
+      setWrongLetters((old) => [...old, value])
     }
-  };
+  }
 
-  const success = (value: string) => {
+  const success = (value: string): void => {
     if (value !== ' ') {
-      setDiscoveredLetters((old) => [...old, value]);
+      setDiscoveredLetters((old) => [...old, value])
     }
-  };
+  }
 
-  const initRound = () => {
-    const word = prompt('What is your word?')?.toUpperCase();
+  const initRound = (): void => {
+    const word = prompt('What is your word?')?.toUpperCase()
 
-    const formatedWord = word?.split('');
+    const formatedWord = word?.split('')
     !word || word === ' '
       ? alert('you need to choose a word')
-      : setWordState(formatedWord!);
-    console.log(formatedWord);
-  };
+      : setWordState(formatedWord!)
+    console.log(formatedWord)
+  }
 
-  const compareString = (e: React.FormEvent) => {
-    e.preventDefault();
+  const compareString = (e: React.FormEvent): void => {
+    e.preventDefault()
 
-    const inputLetter = inputLetterRef.current!.value.toUpperCase();
+    const inputLetter = inputLetterRef.current!.value.toUpperCase()
 
     if (
       inputLetter === undefined ||
       inputLetter === null ||
       inputLetter === ''
     ) {
-      inputLetterRef.current!.value = '';
-      return;
+      inputLetterRef.current!.value = ''
+      return
     }
 
     const alreadyTyped = checkAlreadyTyped(
       inputLetter,
       wrongLetters,
       discoveredLetters
-    );
+    )
 
     if (alreadyTyped) {
-      alert('already typed letter');
+      alert('already typed letter')
     } else {
       sanitizeWorld(wordState).includes(inputLetter)
         ? success(inputLetter)
-        : error(inputLetter);
+        : error(inputLetter)
     }
 
-    inputLetterRef.current!.value = '';
-  };
+    inputLetterRef.current!.value = ''
+  }
 
-  const tryWord = () => {
-    const word = prompt('what is the word?');
+  const tryWord = (): void => {
+    const word = prompt('what is the word?')
     if (word === wordState.join('')) {
-      gameOver(true, resetGame);
+      gameOver(true, resetGame)
     }
-  };
+  }
 
   return (
     <div className="bg-gray-100 w-screen h-screen flex flex-col items-center justify-center">
@@ -160,7 +155,7 @@ const Index = () => {
                 </h3>
               ) : (
                 <div className="w-3"> </div>
-              );
+              )
             })}
           </div>
         </div>
@@ -200,7 +195,7 @@ const Index = () => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Index;
+export default App

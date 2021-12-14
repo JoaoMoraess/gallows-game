@@ -1,6 +1,16 @@
-// Please do not use the array form (like ['tailwindcss', 'postcss-preset-env'])
-// it will create an unexpected error: Invalid PostCSS Plugin found: [0]
+const tailwindcss = require("tailwindcss")
+
+const purgecss = require("@fullhuman/postcss-purgecss")({
+  content: ["./src/**/*.js", "./src/**/*.html"],
+
+  defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || [],
+})
 
 module.exports = {
-  plugins: { tailwindcss: {}, autoprefixer: {} },
-};
+  plugins: [
+    tailwindcss("./tailwindcss/tailwind.config.js"),
+    require("autoprefixer"),
+    require("autoprefixer"),
+    ...(process.env.NODE_ENV === "production" ? [purgecss] : []),
+  ],
+}

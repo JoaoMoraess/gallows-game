@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/member-delimiter-style */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useRef, useState } from 'react'
 import './css/tailwind.css'
 
 import { Condemned } from './components/condemned'
 import { Gallows } from './components/gallows'
+import { ShowMessage } from './components/show-message'
 
 const App: React.FC = () => {
   const inputLetterRef = useRef<HTMLInputElement>(null)
@@ -12,6 +14,7 @@ const App: React.FC = () => {
   const [discoveredLetters, setDiscoveredLetters] = useState<string[]>([])
   const [wrongLetters, setWrongLetters] = useState<string[]>([])
   const [isEnd, setIsEnd] = useState(false)
+  const [msg, setMsg] = useState<{ msg: string; type: string } | null>(null)
 
   const sanitizeWorld = (values: string[]): string[] => {
     return values
@@ -28,7 +31,9 @@ const App: React.FC = () => {
 
   const gameOver = (win: boolean, resetFunction: () => void): void => {
     setIsEnd(true)
-    win ? alert('Congratulation, you win!') : alert('You died!')
+    win
+      ? setMsg({ msg: 'Congratulations you win!', type: 'win' })
+      : setMsg({ msg: 'You died', type: 'lost' })
     setTimeout(() => resetFunction(), 1000)
   }
 
@@ -79,7 +84,7 @@ const App: React.FC = () => {
 
     const formatedWord = word?.split('')
     !word || word === ' '
-      ? alert('you need to choose a word')
+      ? setMsg({ msg: 'you need to choose a word', type: 'warning' })
       : setWordState(formatedWord!)
     console.log(formatedWord)
   }
@@ -105,7 +110,7 @@ const App: React.FC = () => {
     )
 
     if (alreadyTyped) {
-      alert('already typed letter')
+      setMsg({ msg: 'Wrong letter', type: 'warning' })
     } else {
       sanitizeWorld(wordState).includes(inputLetter)
         ? success(inputLetter)
@@ -124,6 +129,9 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-100 w-screen h-screen flex flex-col items-center justify-center">
+      {!!msg && (
+        <ShowMessage msg={msg.msg} type={msg.type} setStateFn={setMsg} />
+      )}
       <h1 className="text-6xl text-blue-400">Gallows game</h1>
       <div className="flex flex-row gap-4">
         <div className="w-20 h-96 border-2 border-blue-500 flex flex-col items-center">

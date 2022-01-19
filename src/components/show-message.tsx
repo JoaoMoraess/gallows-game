@@ -9,7 +9,6 @@ export const ShowMessage: React.FC<{
   useEffect(() => {
     setTimeout(() => {
       setStateFn(null)
-      console.log(type)
     }, 1000)
   })
 
@@ -20,6 +19,7 @@ export const ShowMessage: React.FC<{
         px-12
         py-8
         z-50
+        rounded-md
         ${type === 'win' ? 'bg-green-400' : ''}
         ${type === 'lost' ? 'bg-red-400' : ''}
         ${type === 'warning' ? 'bg-yellow-400' : ''}

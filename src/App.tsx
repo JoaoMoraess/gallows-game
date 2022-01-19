@@ -86,7 +86,6 @@ const App: React.FC = () => {
     !word || word === ' '
       ? setMsg({ msg: 'you need to choose a word', type: 'warning' })
       : setWordState(formatedWord!)
-    console.log(formatedWord)
   }
 
   const compareString = (e: React.FormEvent): void => {
@@ -122,8 +121,11 @@ const App: React.FC = () => {
 
   const tryWord = (): void => {
     const word = prompt('what is the word?')
-    if (word === wordState.join('')) {
+    console.log(word, wordState)
+    if (word?.toUpperCase() === wordState.join('')) {
       gameOver(true, resetGame)
+    } else {
+      gameOver(false, resetGame)
     }
   }
 
